@@ -7,13 +7,18 @@
 #pragma comment(lib, "Ws2_32.lib")
 
 #define SERVER_ADDRESS_STR "127.0.0.1"
+#define NUM_OF_WORKER_THREADS 2	
+int g_num_of_hanldes;
+HANDLE* g_workers_handles;
 
-void Main_server()
+int Main_server(char* port_str)
 {
+int Ind;
  SOCKET MainSocket = INVALID_SOCKET;
  unsigned long Address;
  SOCKADDR_IN service;
-
+ int bindRes;
+ int ListenRes;
 // Initialize Winsock.
 WSADATA wsaData;
 int StartupRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -49,8 +54,47 @@ if (Address == INADDR_NONE)
 
 service.sin_family = AF_INET;
 service.sin_addr.s_addr = Address;
-service.sin_port = htons(SERVER_PORT); //The htons function converts a u_short from host to TCP/IP network byte order 
+service.sin_port = htons((unsigned short)atoi(port_str)); //The htons function converts a u_short from host to TCP/IP network byte order 
 								   //( which is big-endian ).
+/*
+		The three lines following the declaration of sockaddr_in service are used to set up
+		the sockaddr structure:
+		AF_INET is the Internet address family.
+		"127.0.0.1" is the local IP address to which the socket will be bound.
+		2345 is the port number to which the socket will be bound.
+	*/
+
+	// Call the bind function, passing the created socket and the sockaddr_in structure as parameters. 
+	// Check for general errors.
+
+bindRes = bind(MainSocket, (SOCKADDR*)&service, sizeof(service));
+if (bindRes == SOCKET_ERROR)
+{
+	printf("bind( ) failed with error %ld. Ending program\n", WSAGetLastError());
+	goto server_cleanup_2;
+}
+
+// Listen on the Socket.
+ListenRes = listen(MainSocket, SOMAXCONN);
+if (ListenRes == SOCKET_ERROR)
+{
+	printf("Failed listening on socket, error %ld.\n", WSAGetLastError());
+	goto server_cleanup_2;
+}
+
+// Initialize Hanldes' array
+g_num_of_hanldes = NUM_OF_WORKER_THREADS;
+g_workers_handles = (HANDLE*)malloc(NUM_OF_WORKER_THREADS * sizeof(HANDLE));
+if (g_workers_handles == NULL)
+{
+	printf("Failed to Allocate memory!\n");
+	goto server_cleanup_2;
+}
+
+// Initialize all thread handles to NULL, to mark that they have not been initialized
+for (Ind = 0; Ind < g_num_of_hanldes; Ind++)
+	g_workers_handles[Ind] = NULL;
+
 server_cleanup_2:
 if (closesocket(MainSocket) == SOCKET_ERROR)
 printf("Failed to close MainSocket, error %ld. Ending program\n", WSAGetLastError());
