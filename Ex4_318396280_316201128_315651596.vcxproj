@@ -141,6 +141,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.c" />
+    <ClCompile Include="Shared\SocketSendRecvTools.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Shared\SocketExampleShared.h" />
+    <ClInclude Include="Shared\SocketSendRecvTools.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
