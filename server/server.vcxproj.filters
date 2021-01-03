@@ -33,6 +33,9 @@
     <ClCompile Include="MessageDecoding.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FileHandlers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Shared\SocketSendRecvTools.h">

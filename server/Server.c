@@ -6,6 +6,10 @@
 #include <ws2tcpip.h>
 #pragma comment(lib, "Ws2_32.lib")
 //SEARCHME
+//CHANGEME
+//CHANGEDHERE
+//ADDEDHERE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,10 +20,10 @@
 #include "SocketExampleShared.h"
 #include "SocketSendRecvTools.h"
 #include "server.h"
-//#include "FileHandlers.h"
+#include "FileHandlers.h"
 #include "MessageDecoding.h"
 
-
+//DELETEME
 
 #define stdin (__acrt_iob_func(0))
 
@@ -33,6 +37,7 @@ BOOL Exit = FALSE;
 HANDLE MutexHandleForFile = NULL;
 HANDLE MutexHandleForCreatingFile = NULL;
 BOOL two_players_connected = FALSE;
+int There_are_two_players = LAST_PLAYER;				//CHANGEDHERE was: int last_played = LAST_PLAYER;
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
 //HANDLE* dyn_handles;
@@ -42,13 +47,13 @@ BOOL two_players_connected = FALSE;
 //HANDLE MutexHandleForFile = NULL;
 //HANDLE finish_writing_event = NULL;
 //HANDLE  oponent_name_event = NULL;
-BOOL two_players_connected = FALSE;
-BOOL Exit = FALSE;
+//BOOL two_players_connected = FALSE;
+//BOOL Exit = FALSE;
 static int decode_number;
 char* GameSessionFile = "GameSession.txt";
-int last_played = LAST_PLAYER;
+//int last_played = LAST_PLAYER;
 int lines_num = 0;
-HANDLE MutexHandleForCreatingFile = NULL;
+//HANDLE MutexHandleForCreatingFile = NULL;
 char user1_name[MAX_USERNAME_LEN];
 char user2_name[MAX_USERNAME_LEN];
 
@@ -61,6 +66,47 @@ static DWORD ServiceThread(SOCKET* t_socket);
 //static DWORD DeniedThread(SOCKET* t_socket);
 //SOCKET MainSocket;
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
+/*this file checks if file do exist and no need to open once more*/
+static DWORD send_player_move_request(SOCKET* t_socket, char* client_id) {
+
+	// This func sends player move request
+	TransferResult_t SendRes;
+	char SendStr[SEND_STR_SIZE] = "SERVER_PLAYER_MOVE_REQUEST\n";
+	SendRes = SendMsg(SendStr, *t_socket);
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Error while sending SERVER_PLAYER_MOVE_REQUEST, closing thread.\n");
+		closesocket(*t_socket);
+		return STATUS_CODE_FAILURE;
+	}
+	return STATUS_CODE_SUCCESS;
+}
+static DWORD send_invite_and_setup_request(SOCKET* t_socket, char* client_id) {
+
+	// This func send invite an then req move messages
+	TransferResult_t SendRes;
+	char SendStr[SEND_STR_SIZE];
+	char invite[MAX_MESSAGE_TYPE_LEN + MAX_USERNAME_LEN + 2] = "SERVER_INVITE:";
+	strcat(invite, client_id);
+	strcat(invite, "\n");
+	strcpy(SendStr, invite);
+	SendRes = SendMsg(SendStr, *t_socket);
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Error while sending SERVER_INVITE, closing thread.\n");
+		closesocket(*t_socket);
+		return STATUS_CODE_FAILURE;
+	}
+	strcpy(SendStr, "SERVER_SETUP_REQUEST\n"); //CHANGEDHERE strcpy(SendStr, "SERVER_PLAYER_MOVE_REQUEST\n")
+	SendRes = SendMsg(SendStr, *t_socket);
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Error while sending SERVER_SETUP_REQUEST, closing thread.\n"); 
+		closesocket(*t_socket);
+		return STATUS_CODE_FAILURE;
+	}
+	return STATUS_CODE_SUCCESS;
+}
 static DWORD send_approval(SOCKET *t_socket) {
 	char SendStr[SEND_STR_SIZE];
 	TransferResult_t SendRes;
@@ -115,27 +161,79 @@ static DWORD ServiceThread(SOCKET* t_socket)
 			return STATUS_CODE_FAILURE;
 		}
 
-		if (is_client_request(AcceptedStr, client_id))
+		if (is_client_request(AcceptedStr, client_id)) 
 		{
 			two_players_connected = FALSE;
 			if (send_approval(t_socket) == STATUS_CODE_FAILURE) {
 				free(AcceptedStr);
 				return STATUS_CODE_FAILURE;
 			}
-		}
-
-
-		//CHANGEME XStartXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-		else if (is_client_move(AcceptedStr, player_move))
+		}	
+		else if (is_client_versus(AcceptedStr))
 		{
-			if (last_played == 0) {
-				int winner = decide_who_wins(op_move, player_move);
-				if (send_results_server_plays(t_socket, op_move, player_move, "Server", winner, client_id) == STATUS_CODE_FAILURE) {
+			int checking_res;
+		play_versus:
+			checking_res = cheacking_if_file_exits();
+			if (checking_res == ZERO_RET_VAL) {
+				// wait an event. if waited 15 sec and no one signaled event, send no_oponent
+				// when event signaled, request moves from two clients.
+				lines_num = 0;
+				DWORD wait_res = WaitForSingleObject(versus_event, MAX_RESPONSE_WAITING_TIME);
+				if (wait_res == WAIT_OBJECT_0) {
+					// We have another player to play
+					send_invite_and_setup_request(t_socket, client_id);
+					There_are_two_players = ONE_RET_VAL;
+					i_created_file = TRUE;
+				}
+				else if (wait_res == WAIT_TIMEOUT) {
+					// Always alone, no one wants to play
+					if (remove_file() == STATUS_CODE_FAILURE) return STATUS_CODE_FAILURE;
+					if (send_no_opponet(t_socket) == STATUS_CODE_FAILURE) {
+						free(AcceptedStr);
+						return STATUS_CODE_FAILURE;
+					}
+
+				}
+				else {
+					printf("Waiting for versus event failed! Error is %d\n", GetLastError());
 					free(AcceptedStr);
 					return STATUS_CODE_FAILURE;
 				}
 			}
-			else if (last_played == 1)
+			else if (checking_res == 1)
+			{
+				// if yes: there is a player waiting to play. signal event
+				// when event signaled, request moves from two clients.
+				i_created_file = FALSE;
+				There_are_two_players = ONE_RET_VAL;
+				two_players_connected = TRUE;
+				if (SetEvent(versus_event) == FALSE) {
+					printf("cannot set a writing event for file!\n");
+					return STATUS_CODE_FAILURE;
+				}
+				else {
+					if (send_invite_and_setup_request(t_socket, client_id) == STATUS_CODE_FAILURE) {
+						free(AcceptedStr);
+						return STATUS_CODE_FAILURE;
+					}
+
+				}
+			}
+			else {
+				printf("Error while checking file!\n");
+				free(AcceptedStr);
+				return STATUS_CODE_FAILURE;
+			}
+		}
+
+		else if (is_client_setup(AcceptedStr, player_move[15]))		//ADDEDHERE
+		{
+		send_player_move_request(t_socket, client_id);
+		}
+
+		else if (is_client_move(AcceptedStr, player_move))
+		{
+			 if (There_are_two_players == 1)
 			{
 				int my_line_num = write_move_to_file(player_move);
 				if (my_line_num == 1) {
@@ -194,67 +292,6 @@ static DWORD ServiceThread(SOCKET* t_socket)
 			}
 
 		}
-		
-
-
-		else if (is_client_versus(AcceptedStr))
-		{
-			int checking_res;
-		play_versus:
-			checking_res = cheacking_if_file_exits();
-			if (checking_res == ZERO_RET_VAL) {
-				// wait an event. if waited 15 sec and no one signaled event, send no_oponent
-				// when event signaled, request moves from two clients.
-				lines_num = 0;
-				DWORD wait_res = WaitForSingleObject(versus_event, MAX_RESPONSE_WAITING_TIME);
-				if (wait_res == WAIT_OBJECT_0) {
-					// We have another player to play
-					send_invite_and_request_moves(t_socket, client_id);
-					last_played = ONE_RET_VAL;
-					i_created_file = TRUE;
-				}
-				else if (wait_res == WAIT_TIMEOUT) {
-					// Always alone, no one wants to play
-					if (remove_file() == STATUS_CODE_FAILURE) return STATUS_CODE_FAILURE;
-					if (send_no_opponet(t_socket) == STATUS_CODE_FAILURE) {
-						free(AcceptedStr);
-						return STATUS_CODE_FAILURE;
-					}
-
-				}
-				else {
-					printf("Waiting for versus event failed! Error is %d\n", GetLastError());
-					free(AcceptedStr);
-					return STATUS_CODE_FAILURE;
-				}
-			}
-			else if (checking_res == 1)
-			{
-				// if yes: there is a player waiting to play. signal event
-				// when event signaled, request moves from two clients.
-				i_created_file = FALSE;
-				last_played = ONE_RET_VAL;
-				two_players_connected = TRUE;
-				if (SetEvent(versus_event) == FALSE) {
-					printf("cannot set a writing event for file!\n");
-					return STATUS_CODE_FAILURE;
-				}
-				else {
-					if (send_invite_and_request_moves(t_socket, client_id) == STATUS_CODE_FAILURE) {
-						free(AcceptedStr);
-						return STATUS_CODE_FAILURE;
-					}
-
-				}
-			}
-			else {
-				printf("Error while checking file!\n");
-				free(AcceptedStr);
-				return STATUS_CODE_FAILURE;
-			}
-		}
-		//CHANGEME XENDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 
 		else if (client_diconnection(AcceptedStr))
 		{

@@ -39,8 +39,6 @@ BOOL is_client_request(char* in_msg, char client_id[MAX_USERNAME_LEN])
 	}
 	return TRUE;
 }
-
-
 /*for message with type CLIENT_PLAYER_MOVE*/
 BOOL is_client_move(char* in_msg, char player_move[15]) {
 	char* client_move = "CLIENT_PLAYER_MOVE";
@@ -52,6 +50,27 @@ BOOL is_client_move(char* in_msg, char player_move[15]) {
 	}
 	int start_idx = strlen(client_move) + 1;
 	for (int i = 0; i < MAX_USERNAME_LEN; i++) {
+		if (in_msg[start_idx + i] == '\n') {
+			player_move[i] = '\0';
+			break;
+		}
+		player_move[i] = in_msg[start_idx + i];
+	}
+
+	return TRUE;
+}
+
+/*for message with type CLIENT_PLAYER_MOVE*/				//CHANGEDHERE
+BOOL is_client_setup(char* in_msg, char player_move[15]) {
+	char* client_setup = "CLIENT_SETUP";
+	for (int i = 0; i < strlen(client_setup); i++) {
+		if (in_msg[i] == client_setup[i]) {
+			continue;
+		}
+		return FALSE;
+	}
+	int start_idx = strlen(client_setup) + 1;
+	for (int i = 0; i < GAME_NUMBERS_LEN; i++) {
 		if (in_msg[start_idx + i] == '\n') {
 			player_move[i] = '\0';
 			break;

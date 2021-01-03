@@ -24,5 +24,6 @@ BOOL client_diconnection(char* in_msg);
 BOOL is_client_versus(char* in_msg);
 /*for message with type CLIENT_REPLAY*/
 BOOL is_client_replay(char* in_msg);
-
+/*for message with type CLIENT_SETUP*/
+BOOL is_client_setup(char* in_msg, char player_game_numbers[15]);
 #endif 

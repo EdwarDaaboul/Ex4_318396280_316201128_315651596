@@ -73,6 +73,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(ProjectDir)\..\Shared;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -140,12 +141,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Client.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="msgs_file.c" />
     <ClCompile Include="Shared\SocketSendRecvTools.c" />
+    <ClCompile Include="ThreadsChecks.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="msgs_file.h" />
     <ClInclude Include="Shared\SocketExampleShared.h" />
     <ClInclude Include="Shared\SocketSendRecvTools.h" />
+    <ClInclude Include="SocketExampleClient.h" />
+    <ClInclude Include="ThreadsChecks.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

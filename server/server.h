@@ -7,7 +7,7 @@
 
 #define MAX_RESPONSE_WAITING_TIME 15000 // 15 seconds
 #define MAX_USERNAME_LEN 20+1
-
+#define GAME_NUMBERS_LEN 4+1    //ADDEDHERE : YOU SHOULD TALK TO AMEER TO PUT THIS IN THE SHARED FILE 
 int Main_server(char* port_str);
 
 
