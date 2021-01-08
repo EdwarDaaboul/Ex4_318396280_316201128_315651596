@@ -1,6 +1,9 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -50,6 +53,45 @@ static void CleanupWorkerThreads();
 static DWORD ServiceThread(SOCKET* t_socket);
 static DWORD DeniedThread(SOCKET* t_socket);
 SOCKET MainSocket;
+send_msg(SEND_MSG_ARGS_params_t send_msg_args, SOCKET m_socket) {
+	char SendStr[SEND_STR_SIZE];
+	TransferResult_t SendRes;
+	int MsgTypLen = strlen(send_msg_args.message_type);
+	strcpy_s(SendStr, MAX_MESSAGE_TYPE_LEN, send_msg_args.message_type);
+	if (strcmp(send_msg_args.message_args, " ") != 0) {
+		strcat_s(SendStr, MAX_MESSAGE_TYPE_LEN + 1, ":");
+		strcat_s(SendStr, MAX_MESSAGE_TYPE_LEN + MAX_USERNAME_LEN + MAX_MOVE_LEN + 1, send_msg_args.message_args);
+	}
+	strcat_s(SendStr, MAX_MESSAGE_TYPE_LEN + MAX_USERNAME_LEN + MAX_MOVE_LEN + 2, "\n");
+	SendRes = SendMsg(SendStr, m_socket);
+
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Socket error while trying to write data to socket\n");
+		return STATUS_CODE_FAILURE;
+	}
+	return STATUS_CODE_SUCCESS;
+}
+int handling_wait_code(int wait_code) {
+	////handling the wait time for the WaitForSingleObject() function
+	switch (wait_code)
+	{
+	case WAIT_TIMEOUT:
+		printf("Threads timeout!\n");
+		return STATUS_CODE_FAILURE;
+		break;
+	case WAIT_OBJECT_0:
+		return STATUS_CODE_SUCCESS;
+		break;
+	case WAIT_FAILED:
+		printf("Process failed! Error is %d\n", GetLastError());
+		return STATUS_CODE_FAILURE;
+		break;
+	default:
+		printf("Waiting Failed: 0x%x\n", wait_code);
+		return STATUS_CODE_FAILURE;
+	}
+}
 
 char* cows_and_bulls(char client1_choice[4], char client2_guess[4], char buffer[2])
 {
@@ -420,7 +462,8 @@ static DWORD ServiceThread(SOCKET* t_socket)
 					DWORD Wait_Res = WaitForSingleObject(oponent_name_event, INFINITE);
 					if (handling_wait_code(Wait_Res) == STATUS_CODE_FAILURE) return (STATUS_CODE_FAILURE);
 					reading_from_file_for_calacuation(op_move, player_number, my_line_num);
-					char result[BULLS_COWS_STR_LEN] = cows_and_bulls(player_number, op_move, result[BULLS_COWS_STR_LEN]);
+					char result[BULLS_COWS_STR_LEN];
+					cows_and_bulls(player_number, op_move, result);
 					send_results_server_plays(t_socket, op_move, player_number, user1_name, result, client_id, my_line_num);
 					strcpy_s(op_id, MAX_USERNAME_LEN, user1_name);
 					if (i_created_file) {
@@ -439,7 +482,8 @@ static DWORD ServiceThread(SOCKET* t_socket)
 					if (handling_wait_code(Wait_Res) == STATUS_CODE_FAILURE) return (STATUS_CODE_FAILURE);
 
 					reading_from_file_for_calacuation(op_move, player_number, my_line_num);
-					char result[BULLS_COWS_STR_LEN] = cows_and_bulls(player_number, op_move, result[BULLS_COWS_STR_LEN]);
+					char result[BULLS_COWS_STR_LEN];
+					cows_and_bulls(player_number, op_move, result);
 					send_results_server_plays(t_socket, op_move, player_number, user1_name, result, client_id, my_line_num);
 					strcpy_s(op_id, MAX_USERNAME_LEN, user2_name);
 
