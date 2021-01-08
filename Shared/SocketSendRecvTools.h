@@ -14,7 +14,7 @@
 #pragma comment(lib, "ws2_32.lib")
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 #define _CRT_SECURE_NO_WARNINGS
-#define MAX_MESSAGE_TYPE_LEN 19
+#define MAX_MESSAGE_TYPE_LEN 27    //CHANGEDHERE
 #define MAX_USERNAME_LEN 20+1
 #define MAX_RESPONSE_WAITING_TIME 15000 // 15 seconds
 #define MAX_MOVE_LEN 4+1

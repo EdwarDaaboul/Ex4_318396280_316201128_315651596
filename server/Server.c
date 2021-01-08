@@ -38,35 +38,143 @@ HANDLE MutexHandleForFile = NULL;
 HANDLE MutexHandleForCreatingFile = NULL;
 BOOL two_players_connected = FALSE;
 int There_are_two_players = LAST_PLAYER;				//CHANGEDHERE was: int last_played = LAST_PLAYER;
-/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
-
-//HANDLE* dyn_handles;
-//int num_of_hanldes;
-//HANDLE ExitHandle = NULL;
-//HANDLE versus_event = NULL;
-//HANDLE MutexHandleForFile = NULL;
-//HANDLE finish_writing_event = NULL;
-//HANDLE  oponent_name_event = NULL;
-//BOOL two_players_connected = FALSE;
-//BOOL Exit = FALSE;
-static int decode_number;
 char* GameSessionFile = "GameSession.txt";
-//int last_played = LAST_PLAYER;
 int lines_num = 0;
-//HANDLE MutexHandleForCreatingFile = NULL;
 char user1_name[MAX_USERNAME_LEN];
 char user2_name[MAX_USERNAME_LEN];
+int win[WIN_INDEX_LEN] = { -1,-1 };		//ADDEDHERE
 
-/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
-/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
 static int FindFirstUnusedThreadSlot();
-//static void CleanupWorkerThreads();
+static void CleanupWorkerThreads();
 static DWORD ServiceThread(SOCKET* t_socket);
-//static DWORD DeniedThread(SOCKET* t_socket);
-//SOCKET MainSocket;
-/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
+static DWORD DeniedThread(SOCKET* t_socket);
+SOCKET MainSocket;
+
+char* cows_and_bulls(char client1_choice[4], char client2_guess[4], char buffer[2])
+{
+	int i, bulls = 0, cows = 0;
+	for (i = 0; i < 4; i++)
+	{
+		if (client1_choice[i] == client2_guess[i])
+			bulls++;
+		else if (NULL != strchr(client1_choice, client2_guess[i]))
+			cows++;
+	}
+	_itoa_s(bulls, buffer, 3, 10);
+	_itoa_s(cows, buffer + 1, 3, 10);
+	printf("the number of bulls is : %c\n", buffer[0]);
+	printf("the number of cows is : %c\n", buffer[1]);
+	return buffer;
+
+}
 /*this file checks if file do exist and no need to open once more*/
+void close_all_handles() {
+	if (!CloseHandle(ExitHandle)) printf("Failed to close EXITHANDLE\n", WSAGetLastError());
+	if (!CloseHandle(versus_event)) printf("Failed to close VERSUSHANDLE\n", WSAGetLastError());
+	if (!CloseHandle(finish_writing_event)) printf("Failed to close WRITINGHANDLE\n", WSAGetLastError());
+	if (!CloseHandle(oponent_name_event)) printf("Failed to close NAMEHANDLE\n", WSAGetLastError());
+}
+static void CleanupWorkerThreads()
+{
+	int Ind;
+
+	for (Ind = 0; Ind < g_num_of_hanldes; Ind++)
+	{
+		if (g_workers_handles[Ind] != NULL)
+		{
+			// poll to check if thread finished running:
+			DWORD Res = WaitForSingleObject(g_workers_handles[Ind], MAX_RESPONSE_WAITING_TIME);
+
+			if (Res == WAIT_OBJECT_0)
+			{
+
+				CloseHandle(g_workers_handles[Ind]);
+				g_workers_handles[Ind] = NULL;
+				break;
+			}
+			else
+			{
+				BOOL Terminate = TerminateThread(g_workers_handles[Ind], 0);
+				if (Terminate == 0) {
+					printf("Threads termenation failed. Error is %d\n", GetLastError());
+				}
+				continue;
+			}
+		}
+	}
+}
+static DWORD send_server_draw(SOCKET* t_socket){
+	// This function sends SERVER_DRAW and then MAIN_MENU messages.
+	TransferResult_t SendRes;
+	char SendStr[SEND_STR_SIZE];
+	strcpy(SendStr, "SERVER_DRAW\n");
+	SendRes = SendMsg(SendStr, *t_socket);
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Error while sending SERVER_DRAW, closing thread.\n");
+		closesocket(*t_socket);
+		return STATUS_CODE_FAILURE;
+	}
+	strcpy(SendStr, "SERVER_MAIN_MENU\n");
+	SendRes = SendMsg(SendStr, *t_socket);
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Error while sending SERVER_MAIN_MENU, closing thread.\n");
+		closesocket(*t_socket);
+		return STATUS_CODE_FAILURE;
+	}
+	return STATUS_CODE_SUCCESS;
+}
+static DWORD send_server_win(SOCKET* t_socket, char* winner_id,char* other_client_numbers) {
+	// This function sends SERVER_WIN and then MAIN_MENU messages.
+	TransferResult_t SendRes;
+	char SendStr[SEND_STR_SIZE];
+	strcpy(SendStr, "SERVER_WIN:");
+	strcat(SendStr, winner_id);
+	strcat(SendStr, ";");
+	strcat(SendStr, other_client_numbers); 
+	strcat(SendStr, '\n');
+	SendRes = SendMsg(SendStr, *t_socket);
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Error while sending SERVER_WIN, closing thread.\n");
+		closesocket(*t_socket);
+		return STATUS_CODE_FAILURE;
+	}
+	strcpy(SendStr, "SERVER_MAIN_MENU\n");
+	SendRes = SendMsg(SendStr, *t_socket);
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Error while sending SERVER_MAIN_MENU, closing thread.\n");
+		closesocket(*t_socket);
+		return STATUS_CODE_FAILURE;
+	}
+	return STATUS_CODE_SUCCESS;
+
+}
+static DWORD send_no_opponet(SOCKET* t_socket) {
+	// This function sends NO OPONENT and then MAIN_MENU messages.
+	TransferResult_t SendRes;
+	char SendStr[SEND_STR_SIZE];
+	strcpy(SendStr, "SERVER_NO_OPPONENTS\n");
+	SendRes = SendMsg(SendStr, *t_socket);
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Error while sending SERVER_NO_OPPONENTS, closing thread.\n");
+		closesocket(*t_socket);
+		return STATUS_CODE_FAILURE;
+	}
+	strcpy(SendStr, "SERVER_MAIN_MENU\n");
+	SendRes = SendMsg(SendStr, *t_socket);
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Error while sending SERVER_MAIN_MENU, closing thread.\n");
+		closesocket(*t_socket);
+		return STATUS_CODE_FAILURE;
+	}
+	return STATUS_CODE_SUCCESS;
+}
 static DWORD send_player_move_request(SOCKET* t_socket, char* client_id) {
 
 	// This func sends player move request
@@ -107,6 +215,19 @@ static DWORD send_invite_and_setup_request(SOCKET* t_socket, char* client_id) {
 	}
 	return STATUS_CODE_SUCCESS;
 }
+static DWORD send_sever_main_menu(SOCKET* t_socket) {
+	TransferResult_t SendRes;
+	char SendStr[SEND_STR_SIZE];
+	strcpy(SendStr, "SERVER_MAIN_MENU\n");
+	SendRes = SendMsg(SendStr, *t_socket);
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Error while sending SERVER_MAIN_MENU, closing thread.\n");
+		closesocket(*t_socket);
+		return STATUS_CODE_FAILURE;
+	}
+	return STATUS_CODE_SUCCESS;
+}
 static DWORD send_approval(SOCKET *t_socket) {
 	char SendStr[SEND_STR_SIZE];
 	TransferResult_t SendRes;
@@ -128,6 +249,52 @@ static DWORD send_approval(SOCKET *t_socket) {
 	}
 	return STATUS_CODE_SUCCESS;
 }
+static DWORD send_results_server_plays(SOCKET* t_socket, char op_move[MAX_MOVE_LEN], char player_number[MAX_MOVE_LEN], char oponent[MAX_USERNAME_LEN],char result[BULLS_COWS_STR_LEN], char username[MAX_USERNAME_LEN], int my_line_num) {
+	//This func sends results message
+	char opponent_move[MAX_MOVE_LEN];
+	char this_player_number[MAX_MOVE_LEN];
+	char bulls = result[0];
+	char cows = result[1];
+	TransferResult_t SendRes;
+	for (int i = 0; i < MAX_MOVE_LEN; i++) {
+		if (op_move[i] == '\n') {
+			opponent_move[i] = '\0';
+			break;
+		}
+		opponent_move[i] = op_move[i];
+	}
+	for (int i = 0; i < 10; i++) {
+		if (player_number[i] == '\n') {
+			this_player_number[i] = '\0';
+			break;
+		}
+		this_player_number[i] = player_number[i];
+	}
+
+	char main_str[256] = "SERVER_GAME_RESULTS:";
+	strcat(main_str, bulls);
+	strcat(main_str, ";");
+	strcat(main_str, cows);
+	strcat(main_str, ";");
+	strcat(main_str, oponent);
+	strcat(main_str, ";");
+	strcat(main_str, opponent_move);
+	strcat(main_str, "\n");
+	char SendStr[SEND_STR_SIZE];
+	strcpy(SendStr, main_str);
+	SendRes = SendMsg(SendStr, *t_socket);
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Service socket error while writing, closing thread.\n");
+		closesocket(*t_socket);
+		return STATUS_CODE_FAILURE;
+	}
+	if (bulls == FOUR_BULLS)	win[my_line_num] = ONE_RET_VAL;
+	else win[my_line_num] = ZERO_RET_VAL;
+
+	return STATUS_CODE_SUCCESS;
+
+}
 static DWORD ServiceThread(SOCKET* t_socket)
 {
 	// this func manages messages for a specific client
@@ -136,8 +303,9 @@ static DWORD ServiceThread(SOCKET* t_socket)
 	char* AcceptedStr = NULL;
 	char client_id[MAX_USERNAME_LEN];
 	char op_id[MAX_USERNAME_LEN];
-	char op_move[15];
-	char player_move[15];
+	char op_move[MAX_MOVE_LEN];
+	char player_number[MAX_MOVE_LEN]; //ADDEDHERE
+	char player_move[MAX_MOVE_LEN];
 	BOOL i_created_file = FALSE;
 	TransferResult_t SendRes;
 	TransferResult_t RecvRes;
@@ -226,16 +394,21 @@ static DWORD ServiceThread(SOCKET* t_socket)
 			}
 		}
 
-		else if (is_client_setup(AcceptedStr, player_move[15]))		//ADDEDHERE
+		else if (is_client_setup(AcceptedStr, player_number[MAX_MOVE_LEN]))		//ADDEDHERE + CHANGEDHERE
 		{
-		send_player_move_request(t_socket, client_id);
+		if (send_player_move_request(t_socket, client_id) == STATUS_CODE_FAILURE) {
+			free(AcceptedStr);
+			return STATUS_CODE_FAILURE;
+		}
 		}
 
 		else if (is_client_move(AcceptedStr, player_move))
 		{
-			 if (There_are_two_players == 1)
+			int my_line_num;
+			client_move:
+			 if (There_are_two_players == ONE_RET_VAL)
 			{
-				int my_line_num = write_move_to_file(player_move);
+				my_line_num = write_move_to_file(player_move);
 				if (my_line_num == 1) {
 					strcpy_s(user2_name, MAX_USERNAME_LEN, client_id);
 					if (SetEvent(finish_writing_event) == 0) {
@@ -246,16 +419,16 @@ static DWORD ServiceThread(SOCKET* t_socket)
 
 					DWORD Wait_Res = WaitForSingleObject(oponent_name_event, INFINITE);
 					if (handling_wait_code(Wait_Res) == STATUS_CODE_FAILURE) return (STATUS_CODE_FAILURE);
-					reading_from_file_for_calacuation(op_move, player_move, my_line_num);
-					int winner = decide_who_wins(op_move, player_move);
-					send_results_server_plays(t_socket, op_move, player_move, user1_name, winner, client_id);
+					reading_from_file_for_calacuation(op_move, player_number, my_line_num);
+					char result[BULLS_COWS_STR_LEN] = cows_and_bulls(player_number, op_move, result[BULLS_COWS_STR_LEN]);
+					send_results_server_plays(t_socket, op_move, player_number, user1_name, result, client_id, my_line_num);
 					strcpy_s(op_id, MAX_USERNAME_LEN, user1_name);
 					if (i_created_file) {
 						if (remove_file() == STATUS_CODE_FAILURE) return STATUS_CODE_FAILURE;
 					}
 
 				}
-				else if (my_line_num == 0) {
+				else if (my_line_num == ZERO_RET_VAL) {
 					strcpy_s(user1_name, MAX_USERNAME_LEN, client_id);
 					if (SetEvent(oponent_name_event) == 0) {
 						printf("cannot set a writing event for file!\n");
@@ -265,9 +438,9 @@ static DWORD ServiceThread(SOCKET* t_socket)
 					DWORD Wait_Res = WaitForSingleObject(finish_writing_event, INFINITE);
 					if (handling_wait_code(Wait_Res) == STATUS_CODE_FAILURE) return (STATUS_CODE_FAILURE);
 
-					reading_from_file_for_calacuation(op_move, player_move, my_line_num);
-					int winner = decide_who_wins(op_move, player_move);
-					send_results_server_plays(t_socket, op_move, player_move, user2_name, winner, client_id);
+					reading_from_file_for_calacuation(op_move, player_number, my_line_num);
+					char result[BULLS_COWS_STR_LEN] = cows_and_bulls(player_number, op_move, result[BULLS_COWS_STR_LEN]);
+					send_results_server_plays(t_socket, op_move, player_number, user1_name, result, client_id, my_line_num);
 					strcpy_s(op_id, MAX_USERNAME_LEN, user2_name);
 
 					if (i_created_file) {
@@ -281,16 +454,42 @@ static DWORD ServiceThread(SOCKET* t_socket)
 				}
 			}
 			else {
-				printf("No more than two clients in a game!\n");
+				printf("Less than two clients in a game!\n");
 				free(AcceptedStr);
 				return STATUS_CODE_FAILURE;
 			}
-			char SendStr[255];
-			if (send_game_over_menu(t_socket) == STATUS_CODE_FAILURE) {
-				free(AcceptedStr);
-				return STATUS_CODE_FAILURE;
+			while (win[0] == UNINITIALIZED || win[1] == UNINITIALIZED) { ; }
+			if (win[0] == ZERO_RET_VAL && win[1] == ZERO_RET_VAL) // No one wins
+			 {
+				 if (send_player_move_request(t_socket, client_id) == STATUS_CODE_FAILURE) {
+					 free(AcceptedStr);
+					 return STATUS_CODE_FAILURE;
+				 }
+				 goto client_move;
+			 }
+			if (win[0] == ONE_RET_VAL && win[1] == ONE_RET_VAL)		//DRAW
+			{
+				if (send_server_draw(t_socket) == STATUS_CODE_FAILURE) {
+					free(AcceptedStr);
+					return STATUS_CODE_FAILURE;
+				}
 			}
-
+			else if (win[my_line_num] == 1) // I won
+			{
+				if (send_server_win(t_socket, op_id, client_id) == STATUS_CODE_FAILURE) {
+					free(AcceptedStr);
+					return STATUS_CODE_FAILURE;
+				}
+			}
+			else // Other Client Won
+			{
+				if (send_server_win(t_socket, op_id, client_id) == STATUS_CODE_FAILURE) {
+					free(AcceptedStr);
+					return STATUS_CODE_FAILURE;
+				}
+			}
+			win[0] = UNINITIALIZED;
+			win[1] = UNINITIALIZED;
 		}
 
 		else if (client_diconnection(AcceptedStr))
@@ -301,14 +500,14 @@ static DWORD ServiceThread(SOCKET* t_socket)
 		}
 		free(AcceptedStr);
 	}
-	printf("Conversation ended.\n");
+	printf("Conversation ended.\n"); 
 	closesocket(*t_socket);
 	return STATUS_CODE_SUCCESS;
 }
 SOCKET* socket_alloc() {
 
 	SOCKET* socket_ptr = (SOCKET*)malloc(sizeof(SOCKET));
-	if (socket_ptr == NULL) //SEARCHME : we need to deal with this problem; i.e. to cleanup
+	if (socket_ptr == NULL) 
 	{
 		printf("Error while allocating SOCKET!\n");
 	}
@@ -538,7 +737,7 @@ accept_again:
 
 		Ind = FindFirstUnusedThreadSlot(); // in a good server clients connect and disconnect all the time,this function makes 
 										   // sure to find a place in our thread's array to start a thread and remove the disconnected thread
-		SOCKET* socket_ptr = socket_alloc();
+		SOCKET* socket_ptr = socket_alloc(); //SEARCHME : maybe we need to clean_up
 		*socket_ptr = AcceptSocket;
 
 		if (Ind >= NUM_OF_WORKER_THREADS)

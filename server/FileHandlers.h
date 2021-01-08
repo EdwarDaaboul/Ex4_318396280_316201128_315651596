@@ -20,7 +20,7 @@ int close_file(FILE* pfile);
 /*this function writes moves into file*/
 int write_move_to_file(char* player_move);
 /*this function reads moves from file for calculation*/
-int reading_from_file_for_calacuation(char op_move[15], char player_move[15], int my_line_num);
+int reading_from_file_for_calacuation(char op_move[MAX_MOVE_LEN], char player_move[MAX_MOVE_LEN], int my_line_num);
 /*deleting file from directory*/
 int remove_file();
 
