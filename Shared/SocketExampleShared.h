@@ -18,7 +18,7 @@
 #define ONE_RET_VAL 1
 #define ZERO_RET_VAL 0
 #define MAX_MOVE_LENGHT 10
-#define WAIT_TIME_TO_SEND 5000 
+#define WAIT_TIME_TO_SEND 1000000 
 #define PLAYER_LEN_NAME 8
 #define STRINGS_ARE_EQUAL( Str1, Str2 ) ( strcmp( (Str1), (Str2) ) == 0 )
 

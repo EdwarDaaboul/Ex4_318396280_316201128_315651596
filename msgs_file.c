@@ -14,7 +14,7 @@ extern HANDLE recvd_msg_event;
 extern HANDLE recieving_thread;
 extern char op_name[MAX_USERNAME_LEN];
 extern int waiting_status;
-
+extern BOOL no_op ;
 // Print menus and got a choice
 //print num 3 in client behavior
 int print_fail_menu(void) {
@@ -237,25 +237,40 @@ BOOL is_denied(char* in_msg) {
 
 //main menu status so print it
 int got_main_menu(char* str_to_free) {
-
+	printf("main menu begin \n"); //DELETEME
 	SEND_MSG_ARGS_params_t send_msg_args;
 	int choice = print_main_menu();
 	switch (choice) {
 	case 1:
 		// play with other user
+		printf("main menu case 1 begin \n"); //DELETEME
 		strcpy_s(send_msg_args.message_type, MAX_MESSAGE_TYPE_LEN, "CLIENT_VERSUS");
 		strcpy_s(send_msg_args.message_args, MAX_USERNAME_LEN, " ");
 		if (send_msg(send_msg_args) != STATUS_CODE_SUCCESS) return STATUS_CODE_FAILURE;
-		waiting_status = WAIT_15;
+/*
+		if (no_op == TRUE)
+		{
+			waiting_status = WAIT_30;
+		}
+		else
+		{
+			waiting_status = WAIT_15;
+		}
+*/
+		waiting_status = WAIT_30;
+
 		break;
+		
 	case 2:
-		// quit
+		//quit
+		printf("main menu case 2 begin \n"); //DELETEME
 		strcpy_s(send_msg_args.message_type, MAX_MESSAGE_TYPE_LEN, "CLIENT_DISCONNECT");
 		strcpy_s(send_msg_args.message_args, MAX_USERNAME_LEN, " ");
 		if (send_msg(send_msg_args) != STATUS_CODE_SUCCESS) return STATUS_CODE_FAILURE;
 		done = TRUE;
 		break;
 	}
+	printf("main menu end \n"); //DELETEME
 	return STATUS_CODE_SUCCESS;
 }
 

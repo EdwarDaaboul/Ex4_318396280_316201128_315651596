@@ -93,7 +93,7 @@ int handling_wait_code(int wait_code) {
 	}
 }
 
-char* cows_and_bulls(char client1_choice[4], char client2_guess[4], char buffer[2])
+char* cows_and_bulls(char client1_choice[4], char client2_guess[4], char buffer[3])
 {
 	int i, bulls = 0, cows = 0;
 	for (i = 0; i < 4; i++)
@@ -247,11 +247,11 @@ static DWORD send_invite_and_setup_request(SOCKET* t_socket, char* client_id) {
 		closesocket(*t_socket);
 		return STATUS_CODE_FAILURE;
 	}
-	strcpy(SendStr, "SERVER_SETUP_REQUEST\n"); //CHANGEDHERE strcpy(SendStr, "SERVER_PLAYER_MOVE_REQUEST\n")
+	strcpy(SendStr, "SERVER_SETUP_REQUSET\n"); //CHANGEDHERE strcpy(SendStr, "SERVER_PLAYER_MOVE_REQUEST\n")
 	SendRes = SendMsg(SendStr, *t_socket);
 	if (SendRes == TRNS_FAILED)
 	{
-		printf("Error while sending SERVER_SETUP_REQUEST, closing thread.\n"); 
+		printf("Error while sending SERVER_SETUP_REQUSET, closing thread.\n"); 
 		closesocket(*t_socket);
 		return STATUS_CODE_FAILURE;
 	}
@@ -273,7 +273,9 @@ static DWORD send_sever_main_menu(SOCKET* t_socket) {
 static DWORD send_approval(SOCKET *t_socket) {
 	char SendStr[SEND_STR_SIZE];
 	TransferResult_t SendRes;
+	printf("we sent approval\n");
 	strcpy(SendStr, "SERVER_APPROVED\n");
+	
 	SendRes = SendMsg(SendStr, *t_socket);
 	if (SendRes == TRNS_FAILED)
 	{
@@ -340,6 +342,7 @@ static DWORD send_results_server_plays(SOCKET* t_socket, char op_move[MAX_MOVE_L
 static DWORD ServiceThread(SOCKET* t_socket)
 {
 	// this func manages messages for a specific client
+	printf("thread made\n"); //DELETEME
 	char SendStr[SEND_STR_SIZE];
 	char RecvStr[SEND_STR_SIZE];
 	char* AcceptedStr = NULL;
@@ -351,11 +354,12 @@ static DWORD ServiceThread(SOCKET* t_socket)
 	BOOL i_created_file = FALSE;
 	TransferResult_t SendRes;
 	TransferResult_t RecvRes;
+
 	while (1)
 	{
 		AcceptedStr = NULL;
 		RecvRes = ReceiveMsg(&AcceptedStr, *t_socket);
-
+		printf("%s\n", AcceptedStr); //DELETEME
 		if (RecvRes == TRNS_FAILED)
 		{
 			printf("Service socket error while reading, closing thread.\n");
@@ -385,6 +389,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 		play_versus:
 			checking_res = cheacking_if_file_exits();
 			if (checking_res == ZERO_RET_VAL) {
+				printf("first one creating file \n ");
 				// wait an event. if waited 15 sec and no one signaled event, send no_oponent
 				// when event signaled, request moves from two clients.
 				lines_num = 0;
@@ -436,8 +441,11 @@ static DWORD ServiceThread(SOCKET* t_socket)
 			}
 		}
 
-		else if (is_client_setup(AcceptedStr, player_number[MAX_MOVE_LEN]))		//ADDEDHERE + CHANGEDHERE
+		else if (is_client_setup(AcceptedStr, player_number))		//ADDEDHERE + CHANGEDHERE
 		{
+			printf("this is START client_setup\n");
+			printf("%s", player_number);
+			printf("this is END client_setup\n");
 		if (send_player_move_request(t_socket, client_id) == STATUS_CODE_FAILURE) {
 			free(AcceptedStr);
 			return STATUS_CODE_FAILURE;
@@ -463,14 +471,19 @@ static DWORD ServiceThread(SOCKET* t_socket)
 					if (handling_wait_code(Wait_Res) == STATUS_CODE_FAILURE) return (STATUS_CODE_FAILURE);
 					reading_from_file_for_calacuation(op_move, player_number, my_line_num);
 					char result[BULLS_COWS_STR_LEN];
+					printf("1 we are calc cows and bulls\n");
+					printf("player_number:%s\n", player_number);
+					printf("op_move:%s\n", op_move);
 					cows_and_bulls(player_number, op_move, result);
+					printf("result:%s", result);
 					send_results_server_plays(t_socket, op_move, player_number, user1_name, result, client_id, my_line_num);
 					strcpy_s(op_id, MAX_USERNAME_LEN, user1_name);
 					if (i_created_file) {
 						if (remove_file() == STATUS_CODE_FAILURE) return STATUS_CODE_FAILURE;
 					}
-
+					printf("weeeee1\n");
 				}
+				
 				else if (my_line_num == ZERO_RET_VAL) {
 					strcpy_s(user1_name, MAX_USERNAME_LEN, client_id);
 					if (SetEvent(oponent_name_event) == 0) {
@@ -483,13 +496,18 @@ static DWORD ServiceThread(SOCKET* t_socket)
 
 					reading_from_file_for_calacuation(op_move, player_number, my_line_num);
 					char result[BULLS_COWS_STR_LEN];
+					printf("0 we are calc cows and bulls\n");
+					printf("player_number:%s\n", player_number);
+					printf("op_move:%s\n", op_move);
 					cows_and_bulls(player_number, op_move, result);
+					printf("result:%s", result);
 					send_results_server_plays(t_socket, op_move, player_number, user1_name, result, client_id, my_line_num);
 					strcpy_s(op_id, MAX_USERNAME_LEN, user2_name);
 
 					if (i_created_file) {
 						if (remove_file() == STATUS_CODE_FAILURE) return STATUS_CODE_FAILURE;
 					}
+				printf("weeeee0\n");
 				}
 				else {
 					printf("failed to write to file!\n");
@@ -796,7 +814,7 @@ accept_again:
 				g_workers_handles[g_num_of_hanldes] = NULL; // Init new handle
 				g_num_of_hanldes++;
 			}
-
+			printf("%d", Ind); //DELETEME
 			printf("No slots available for client, dening request.\n");
 			g_workers_handles[Ind] = CreateThread(
 				NULL,
@@ -809,7 +827,7 @@ accept_again:
 
 		}
 		else {
-
+			printf("%d", Ind); //DELETEME
 			g_workers_handles[Ind] = CreateThread(
 				NULL,
 				0,

@@ -31,7 +31,7 @@ int waiting_status = NO_WAIT;
 char op_name[MAX_USERNAME_LEN];
 BOOL was_error = FALSE;
 BOOL fail_menu = FALSE;
-
+BOOL no_op = FALSE;
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
 //Reading data coming from the server
@@ -53,9 +53,11 @@ static DWORD RecvDataThread(void)
 		}
 		else
 		{
+			printf("%s\n", AcceptedStr); //DELETEME
 			//server approved status - check done step 5 part 1
 			if (is_msgs_equal(AcceptedStr, "SERVER_APPROVED\n"))
 			{
+			
 				//update approval status
 				if (got_approval(AcceptedStr) == STATUS_CODE_FAILURE) was_error = TRUE;
 			}
@@ -65,15 +67,23 @@ static DWORD RecvDataThread(void)
 				if (got_denied(AcceptedStr) == STATUS_CODE_FAILURE) was_error = TRUE;
 			}
 			//server main menu - check done step 6 , check done step 8 , check done step 7 part 2
-			else if (is_msgs_equal(AcceptedStr, "SERVER_MAIN_MENU \n"))
+			
+			else if (is_msgs_equal(AcceptedStr, "SERVER_MAIN_MENU\n"))
 			{
+				
 				if (got_main_menu(AcceptedStr) == STATUS_CODE_FAILURE) was_error = TRUE;
+			}
+			else if (is_msgs_equal(AcceptedStr, "SERVER_NO_OPPONENTS\n"))
+			{
+				no_op = TRUE;
+				//waiting_status =WAIT_30;
 			}
 			//server send SERVER_INVITE and oponent name saved in op_name-> step 7 part 1
 			else if (is_invite(AcceptedStr)) { printf("Game is on\n"); }
 			//CLIENT SETUP - check done step 9
-			else if (is_msgs_equal(AcceptedStr, "REQUSET_SETUP_SERVER\n"))
+			else if (is_msgs_equal(AcceptedStr, "SERVER_SETUP_REQUSET\n"))
 			{
+				waiting_status = NO_WAIT;
 				if (stup_move(AcceptedStr) == STATUS_CODE_FAILURE) was_error = TRUE;
 			}
 			//CLIENT MOVE - check done step 10 part 1
@@ -183,7 +193,7 @@ int initiate_event() {
 int event_wait_decode_beginning(DWORD waiting_res, char* server_ip, char* port_str) {
 	if (was_error) return FINISH;
 	if (waiting_res == WAIT_TIMEOUT) {
-		printf("Failed connecting to server on %s:%s.\n", server_ip, port_str);
+		printf("1 Failed connecting to server on %s:%s.\n", server_ip, port_str);
 		if (print_fail_menu() == 1) return RETRY;
 		else return FINISH;
 	}
@@ -219,12 +229,16 @@ int event_wait_decode_proc(DWORD waiting_res, char* server_ip, char* port_str) {
 	if (was_error) return FINISH;
 	if (done)	   return FINISH;
 	if (waiting_res == WAIT_TIMEOUT) {
+		//printf("the waiting status is:%d\n", waiting_status); //DELETEME 
 		if (waiting_status == WAIT_15) {
-			printf("Failed connecting to server on %s:%s.\n", server_ip, port_str);
+			printf("2 Failed connecting to server on %s:%s.\n", server_ip, port_str);
 			if (print_fail_menu() == 1) return RETRY;
 			else return FINISH;
 		}
-		if (waiting_status == WAIT_30) waiting_status = WAIT_15;
+		if (waiting_status == WAIT_30) {
+			printf("now im 30 to 15 \n");
+			waiting_status = WAIT_15;
+		}
 		return WAIT_AGAIN_PROC;
 	}
 	else if (waiting_res == WAIT_OBJECT_0) {
@@ -238,6 +252,7 @@ int event_wait_decode_proc(DWORD waiting_res, char* server_ip, char* port_str) {
 		return FINISH;
 	}
 }
+
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
@@ -297,7 +312,7 @@ int MainClient(char* server_ip, char* port_str, char* username)
 retry_connect:
 	if (connect(m_socket, (SOCKADDR*)&clientService, sizeof(clientService)) == SOCKET_ERROR) {
 		//fail to connect -> print num 3 in client behavior
-		printf("Failed connecting to server on %s:%s.\n", server_ip, port_str);
+		printf("3 Failed connecting to server on %s:%s.\n", server_ip, port_str);
 		//if the client choose 1 -> reconnect
 		if (print_fail_menu() == 1) goto retry_connect;
 		//if the client choose 2 -> Exit 
@@ -333,8 +348,10 @@ wait_for_first_message:
 	/// HERE WE SUCCESSED TO CONNECT - READY TO APPLICATION
 
 wait_for_message:
+	//printf("now we are waiting for message from server\n");
 	waiting_res = WaitForSingleObject(recvd_msg_event, MAX_RESPONSE_WAITING_TIME);
 	waiting_decode = event_wait_decode_proc(waiting_res, server_ip, port_str);
+
 	switch (waiting_decode)
 	{
 	case RETRY:      goto retry_connect;
