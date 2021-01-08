@@ -443,9 +443,6 @@ static DWORD ServiceThread(SOCKET* t_socket)
 
 		else if (is_client_setup(AcceptedStr, player_number))		//ADDEDHERE + CHANGEDHERE
 		{
-			printf("this is START client_setup\n");
-			printf("%s", player_number);
-			printf("this is END client_setup\n");
 		if (send_player_move_request(t_socket, client_id) == STATUS_CODE_FAILURE) {
 			free(AcceptedStr);
 			return STATUS_CODE_FAILURE;
@@ -469,6 +466,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 
 					DWORD Wait_Res = WaitForSingleObject(oponent_name_event, INFINITE);
 					if (handling_wait_code(Wait_Res) == STATUS_CODE_FAILURE) return (STATUS_CODE_FAILURE);
+					printf("player_number before calculation :%s\n", player_number);
 					reading_from_file_for_calacuation(op_move, player_number, my_line_num);
 					char result[BULLS_COWS_STR_LEN];
 					printf("1 we are calc cows and bulls\n");

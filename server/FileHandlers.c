@@ -119,11 +119,9 @@ int reading_from_file_for_calacuation(char op_move[MAX_MOVE_LEN], char player_mo
 	}
 	// Matching moves
 	if (my_line_num == 0) {
-		strcpy_s(player_move, MAX_MOVE_LEN, line1);
 		strcpy_s(op_move, MAX_MOVE_LEN, line2);
 	}
 	else {
-		strcpy_s(player_move, MAX_MOVE_LEN, line2);
 		strcpy_s(op_move, MAX_MOVE_LEN, line1);
 	}
 	// Closing file
