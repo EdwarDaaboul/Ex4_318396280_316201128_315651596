@@ -15,6 +15,7 @@ extern HANDLE recieving_thread;
 extern char op_name[MAX_USERNAME_LEN];
 extern int waiting_status;
 extern BOOL no_op ;
+int send_msg(SEND_MSG_ARGS_params_t send_msg_args);
 // Print menus and got a choice
 //print num 3 in client behavior
 int print_fail_menu(void) {
@@ -77,14 +78,14 @@ BOOL is_results_msg(char* in_msg) {
 
 	while (offset_idx < LEN_BULLS_OR_COWS) {
 		if (in_msg[start_arg_idx + offset_idx] == '\n') { // msg ends early
-			printf("Error: Got results with wrong arguments\n");
+			printf("1 Error: Got results with wrong arguments\n");
 			return FALSE;
 		}
 		if (in_msg[start_arg_idx + offset_idx] == ';') break; // Pass to next argument
 		bulls[offset_idx] = in_msg[start_arg_idx + offset_idx];
 		offset_idx++;
 	}
-	bulls[offset_idx] = '\0';
+	bulls[offset_idx] ='\0';
 	start_arg_idx = start_arg_idx + offset_idx + 1;
 	offset_idx = 0;
 
@@ -97,7 +98,7 @@ BOOL is_results_msg(char* in_msg) {
 		cows[offset_idx] = in_msg[start_arg_idx + offset_idx];
 		offset_idx++;
 	}
-	cows[offset_idx] = '\0';
+	cows[offset_idx] ='\0';
 	start_arg_idx = start_arg_idx + offset_idx + 1;
 	offset_idx = 0;
 
@@ -110,11 +111,10 @@ BOOL is_results_msg(char* in_msg) {
 		username[offset_idx] = in_msg[start_arg_idx + offset_idx];
 		offset_idx++;
 	}
-	username[offset_idx] = '\0';
+	username[offset_idx] ='\0';
 	start_arg_idx = start_arg_idx + offset_idx + 1;
 	offset_idx = 0;
-
-	while (offset_idx < MAX_MOVE_LEN) {
+	while (offset_idx < MAX_MOVE_LEN_UPDATED) {
 		if (in_msg[start_arg_idx + offset_idx] == '\n') { // msg ends early
 			printf("Error: Got results with wrong arguments\n");
 			return FALSE;
@@ -123,7 +123,7 @@ BOOL is_results_msg(char* in_msg) {
 		op_move[offset_idx] = in_msg[start_arg_idx + offset_idx];
 		offset_idx++;
 	}
-	op_move[offset_idx] = '\0';
+	op_move[offset_idx] ='\0';
 	start_arg_idx = start_arg_idx + offset_idx + 1;
 	offset_idx = 0;
 
@@ -164,7 +164,7 @@ BOOL is_winner_msg(char* in_msg) {
 	start_arg_idx = start_arg_idx + offset_idx + 1;
 	offset_idx = 0;
 
-	while (offset_idx < MAX_MOVE_LEN) {
+	while (offset_idx < MAX_MOVE_LEN_UPDATED) {
 		if (in_msg[start_arg_idx + offset_idx] == '\n') { // msg ends early
 			printf("Error: Got results with wrong arguments\n");
 			return FALSE;

@@ -33,7 +33,7 @@ BOOL was_error = FALSE;
 BOOL fail_menu = FALSE;
 BOOL no_op = FALSE;
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
-
+int send_msg(SEND_MSG_ARGS_params_t send_msg_args);
 //Reading data coming from the server
 static DWORD RecvDataThread(void)
 {

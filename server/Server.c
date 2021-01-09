@@ -105,8 +105,8 @@ char* cows_and_bulls(char client1_choice[4], char client2_guess[4], char buffer[
 	}
 	_itoa_s(bulls, buffer, 3, 10);
 	_itoa_s(cows, buffer + 1, 3, 10);
-	printf("the number of bulls is : %c\n", buffer[0]);
-	printf("the number of cows is : %c\n", buffer[1]);
+	//printf("the number of bulls is : %c\n", buffer[0]);
+	//printf("the number of cows is : %c\n", buffer[1]);
 	return buffer;
 
 }
@@ -295,11 +295,17 @@ static DWORD send_approval(SOCKET *t_socket) {
 }
 static DWORD send_results_server_plays(SOCKET* t_socket, char op_move[MAX_MOVE_LEN], char player_number[MAX_MOVE_LEN], char oponent[MAX_USERNAME_LEN],char result[BULLS_COWS_STR_LEN], char username[MAX_USERNAME_LEN], int my_line_num) {
 	//This func sends results message
+
 	char opponent_move[MAX_MOVE_LEN];
 	char this_player_number[MAX_MOVE_LEN];
-	char bulls = result[0];
-	char cows = result[1];
+	char bulls[2];	//SEARCHME : dont forget to change numbers to defines
+	char cows[2];
+	bulls[0] = result[0];
+	bulls[1] = '\0';
+	cows[0] = result[1];
+	cows[1] = '\0';
 	TransferResult_t SendRes;
+
 	for (int i = 0; i < MAX_MOVE_LEN; i++) {
 		if (op_move[i] == '\n') {
 			opponent_move[i] = '\0';
@@ -333,16 +339,19 @@ static DWORD send_results_server_plays(SOCKET* t_socket, char op_move[MAX_MOVE_L
 		closesocket(*t_socket);
 		return STATUS_CODE_FAILURE;
 	}
-	if (bulls == FOUR_BULLS)	win[my_line_num] = ONE_RET_VAL;
-	else win[my_line_num] = ZERO_RET_VAL;
-
+	if (strcmp(bulls, FOUR_BULLS)==0) {
+		win[my_line_num] = ONE_RET_VAL;
+	}
+	else
+	{
+		win[my_line_num] = ZERO_RET_VAL;
+	}
 	return STATUS_CODE_SUCCESS;
 
 }
 static DWORD ServiceThread(SOCKET* t_socket)
 {
 	// this func manages messages for a specific client
-	printf("thread made\n"); //DELETEME
 	char SendStr[SEND_STR_SIZE];
 	char RecvStr[SEND_STR_SIZE];
 	char* AcceptedStr = NULL;
@@ -354,12 +363,15 @@ static DWORD ServiceThread(SOCKET* t_socket)
 	BOOL i_created_file = FALSE;
 	TransferResult_t SendRes;
 	TransferResult_t RecvRes;
-
+	static char result[BULLS_COWS_STR_LEN];
 	while (1)
 	{
+		printf("Start of while true \n");
+		
 		AcceptedStr = NULL;
+		printf("1111111 AcceptedStr is %s\n", AcceptedStr);
 		RecvRes = ReceiveMsg(&AcceptedStr, *t_socket);
-		printf("%s\n", AcceptedStr); //DELETEME
+		printf("222222 AcceptedStr is %s\n", AcceptedStr);
 		if (RecvRes == TRNS_FAILED)
 		{
 			printf("Service socket error while reading, closing thread.\n");
@@ -374,7 +386,6 @@ static DWORD ServiceThread(SOCKET* t_socket)
 			free(AcceptedStr);
 			return STATUS_CODE_FAILURE;
 		}
-
 		if (is_client_request(AcceptedStr, client_id)) 
 		{
 			two_players_connected = FALSE;
@@ -385,7 +396,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 		}	
 		else if (is_client_versus(AcceptedStr))
 		{
-			int checking_res;
+		int checking_res;
 		play_versus:
 			checking_res = cheacking_if_file_exits();
 			if (checking_res == ZERO_RET_VAL) {
@@ -452,37 +463,38 @@ static DWORD ServiceThread(SOCKET* t_socket)
 		else if (is_client_move(AcceptedStr, player_move))
 		{
 			int my_line_num;
-			client_move:
+		client_move:
+
 			 if (There_are_two_players == ONE_RET_VAL)
 			{
+				int checking_res_2 = cheacking_if_file_exits();
 				my_line_num = write_move_to_file(player_move);
+				printf("my line number is: %d\n", my_line_num);
 				if (my_line_num == 1) {
+					printf("1\n");
 					strcpy_s(user2_name, MAX_USERNAME_LEN, client_id);
 					if (SetEvent(finish_writing_event) == 0) {
 						printf("cannot set a writing event for file!\n");
 						free(AcceptedStr);
 						return STATUS_CODE_FAILURE;
 					}
-
+					printf("2\n");
 					DWORD Wait_Res = WaitForSingleObject(oponent_name_event, INFINITE);
 					if (handling_wait_code(Wait_Res) == STATUS_CODE_FAILURE) return (STATUS_CODE_FAILURE);
-					printf("player_number before calculation :%s\n", player_number);
 					reading_from_file_for_calacuation(op_move, player_number, my_line_num);
-					char result[BULLS_COWS_STR_LEN];
-					printf("1 we are calc cows and bulls\n");
-					printf("player_number:%s\n", player_number);
-					printf("op_move:%s\n", op_move);
 					cows_and_bulls(player_number, op_move, result);
-					printf("result:%s", result);
 					send_results_server_plays(t_socket, op_move, player_number, user1_name, result, client_id, my_line_num);
+					//my_line_num = -1;
 					strcpy_s(op_id, MAX_USERNAME_LEN, user1_name);
 					if (i_created_file) {
 						if (remove_file() == STATUS_CODE_FAILURE) return STATUS_CODE_FAILURE;
+						i_created_file = FALSE;
 					}
-					printf("weeeee1\n");
+					printf("3\n");
 				}
 				
 				else if (my_line_num == ZERO_RET_VAL) {
+					printf("4\n");
 					strcpy_s(user1_name, MAX_USERNAME_LEN, client_id);
 					if (SetEvent(oponent_name_event) == 0) {
 						printf("cannot set a writing event for file!\n");
@@ -493,19 +505,16 @@ static DWORD ServiceThread(SOCKET* t_socket)
 					if (handling_wait_code(Wait_Res) == STATUS_CODE_FAILURE) return (STATUS_CODE_FAILURE);
 
 					reading_from_file_for_calacuation(op_move, player_number, my_line_num);
-					char result[BULLS_COWS_STR_LEN];
-					printf("0 we are calc cows and bulls\n");
-					printf("player_number:%s\n", player_number);
-					printf("op_move:%s\n", op_move);
 					cows_and_bulls(player_number, op_move, result);
-					printf("result:%s", result);
-					send_results_server_plays(t_socket, op_move, player_number, user1_name, result, client_id, my_line_num);
+					send_results_server_plays(t_socket, op_move, player_number, user2_name, result, client_id, my_line_num);
+					//my_line_num = -1;
+					printf("5\n");
 					strcpy_s(op_id, MAX_USERNAME_LEN, user2_name);
-
 					if (i_created_file) {
 						if (remove_file() == STATUS_CODE_FAILURE) return STATUS_CODE_FAILURE;
+						i_created_file = FALSE;
 					}
-				printf("weeeee0\n");
+
 				}
 				else {
 					printf("failed to write to file!\n");
@@ -518,14 +527,17 @@ static DWORD ServiceThread(SOCKET* t_socket)
 				free(AcceptedStr);
 				return STATUS_CODE_FAILURE;
 			}
+			 printf("6\n");
 			while (win[0] == UNINITIALIZED || win[1] == UNINITIALIZED) { ; }
 			if (win[0] == ZERO_RET_VAL && win[1] == ZERO_RET_VAL) // No one wins
 			 {
+				printf("No one wins No one wins No one wins No one wins \n");
 				 if (send_player_move_request(t_socket, client_id) == STATUS_CODE_FAILURE) {
+					 printf("7\n");
 					 free(AcceptedStr);
 					 return STATUS_CODE_FAILURE;
 				 }
-				 goto client_move;
+				 printf("8\n");
 			 }
 			if (win[0] == ONE_RET_VAL && win[1] == ONE_RET_VAL)		//DRAW
 			{
@@ -534,7 +546,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 					return STATUS_CODE_FAILURE;
 				}
 			}
-			else if (win[my_line_num] == 1) // I won
+			else if (win[(int)my_line_num] == ONE_RET_VAL) // I won
 			{
 				if (send_server_win(t_socket, op_id, client_id) == STATUS_CODE_FAILURE) {
 					free(AcceptedStr);
@@ -548,8 +560,10 @@ static DWORD ServiceThread(SOCKET* t_socket)
 					return STATUS_CODE_FAILURE;
 				}
 			}
+			my_line_num = -1;
 			win[0] = UNINITIALIZED;
 			win[1] = UNINITIALIZED;
+
 		}
 
 		else if (client_diconnection(AcceptedStr))
@@ -558,8 +572,10 @@ static DWORD ServiceThread(SOCKET* t_socket)
 			closesocket(*t_socket);
 			return STATUS_CODE_SUCCESS;
 		}
-		free(AcceptedStr);
+		printf("End of while true \n");
+		
 	}
+	free(AcceptedStr);
 	printf("Conversation ended.\n"); 
 	closesocket(*t_socket);
 	return STATUS_CODE_SUCCESS;
@@ -812,7 +828,6 @@ accept_again:
 				g_workers_handles[g_num_of_hanldes] = NULL; // Init new handle
 				g_num_of_hanldes++;
 			}
-			printf("%d", Ind); //DELETEME
 			printf("No slots available for client, dening request.\n");
 			g_workers_handles[Ind] = CreateThread(
 				NULL,
@@ -825,7 +840,6 @@ accept_again:
 
 		}
 		else {
-			printf("%d", Ind); //DELETEME
 			g_workers_handles[Ind] = CreateThread(
 				NULL,
 				0,

@@ -18,6 +18,7 @@
 #define MAX_USERNAME_LEN 20+1
 #define MAX_RESPONSE_WAITING_TIME 15000 // 15 seconds
 #define MAX_MOVE_LEN 5+1
+#define MAX_MOVE_LEN_UPDATED 4
 #define LEN_BULLS_OR_COWS 1+1
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 typedef struct
