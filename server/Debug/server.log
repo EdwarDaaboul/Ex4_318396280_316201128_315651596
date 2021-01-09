@@ -1,41 +1,22 @@
-﻿  SocketSendRecvTools.c
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\Shared\SocketSendRecvTools.c(89,41): warning C4090: 'function': different 'const' qualifiers
-  FileHandlers.c
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\FileHandlers.c(49,24): warning C4013: 'handling_wait_code' undefined; assuming extern returning int
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\FileHandlers.c(132,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\FileHandlers.c(139,20): warning C4018: '<': signed/unsigned mismatch
-  main.c
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\main.c(20,9): warning C4013: 'printf' undefined; assuming extern returning int
-  MessageDecoding.c
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\MessageDecoding.c(26,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\MessageDecoding.c(45,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\MessageDecoding.c(66,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\MessageDecoding.c(86,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\MessageDecoding.c(98,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\MessageDecoding.c(110,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\MessageDecoding.c(122,20): warning C4018: '<': signed/unsigned mismatch
-  Server.c
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(115,86): warning C4474: 'printf' : too many arguments passed for format string
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(115,86): message : placeholders and their parameters expect 0 variadic arguments, but 1 were provided
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(116,90): warning C4474: 'printf' : too many arguments passed for format string
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(116,90): message : placeholders and their parameters expect 0 variadic arguments, but 1 were provided
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(117,99): warning C4474: 'printf' : too many arguments passed for format string
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(117,99): message : placeholders and their parameters expect 0 variadic arguments, but 1 were provided
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(118,94): warning C4474: 'printf' : too many arguments passed for format string
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(118,94): message : placeholders and their parameters expect 0 variadic arguments, but 1 were provided
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(179,22): warning C4047: 'function': 'const char *' differs in levels of indirection from 'int'
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(179,18): warning C4024: 'strcat': different types for formal and actual parameter 2
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(400,14): warning C4102: 'play_versus': unreferenced label
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(466,14): warning C4102: 'client_move': unreferenced label
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(355,7): warning C4101: 'SendStr': unreferenced local variable
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(364,19): warning C4101: 'SendRes': unreferenced local variable
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(356,7): warning C4101: 'RecvStr': unreferenced local variable
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(651,19): warning C4101: 'SendRes': unreferenced local variable
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(713,3): warning C4033: 'Main_server' must return a value
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(783,21): warning C4013: 'CreateFileMutex' undefined; assuming extern returning int
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(784,30): warning C4013: 'CreateFileMutexCreatFile' undefined; assuming extern returning int
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(698,6): warning C4101: 'Loop': unreferenced local variable
-  Generating Code...
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(603): warning C4716: 'WaitForExit': must return a value
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\server\Server.c(873): warning C4716: 'Main_server': must return a value
-  server.vcxproj -> C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\Debug\server.exe
+﻿  Server.c
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(115,86): warning C4474: 'printf' : too many arguments passed for format string
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(115,86): message : placeholders and their parameters expect 0 variadic arguments, but 1 were provided
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(116,90): warning C4474: 'printf' : too many arguments passed for format string
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(116,90): message : placeholders and their parameters expect 0 variadic arguments, but 1 were provided
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(117,99): warning C4474: 'printf' : too many arguments passed for format string
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(117,99): message : placeholders and their parameters expect 0 variadic arguments, but 1 were provided
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(118,94): warning C4474: 'printf' : too many arguments passed for format string
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(118,94): message : placeholders and their parameters expect 0 variadic arguments, but 1 were provided
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(412,14): warning C4102: 'play_versus': unreferenced label
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(482,14): warning C4102: 'client_move': unreferenced label
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(365,7): warning C4101: 'SendStr': unreferenced local variable
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(374,19): warning C4101: 'SendRes': unreferenced local variable
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(366,7): warning C4101: 'RecvStr': unreferenced local variable
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(679,19): warning C4101: 'SendRes': unreferenced local variable
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(741,3): warning C4033: 'Main_server' must return a value
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(811,21): warning C4013: 'CreateFileMutex' undefined; assuming extern returning int
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(812,30): warning C4013: 'CreateFileMutexCreatFile' undefined; assuming extern returning int
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(726,6): warning C4101: 'Loop': unreferenced local variable
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(906): warning C4716: 'Main_server': must return a value
+C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\server\Server.c(631): warning C4716: 'WaitForExit': must return a value
+  server.vcxproj -> C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\Debug\server.exe

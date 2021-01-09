@@ -172,26 +172,36 @@ static DWORD send_server_win(SOCKET* t_socket, char* winner_id,char* other_clien
 	// This function sends SERVER_WIN and then MAIN_MENU messages.
 	TransferResult_t SendRes;
 	char SendStr[SEND_STR_SIZE];
+	printf("4.00000\n");
 	strcpy(SendStr, "SERVER_WIN:");
+	printf("5.1\n");
 	strcat(SendStr, winner_id);
+	printf("5.2\n");
 	strcat(SendStr, ";");
-	strcat(SendStr, other_client_numbers); 
-	strcat(SendStr, '\n');
+	printf("5.3\n");
+	strcat(SendStr, other_client_numbers);
+	printf("5.4\n");
+	strcat(SendStr, "\n");
+	printf("4.0\n");
 	SendRes = SendMsg(SendStr, *t_socket);
+	printf("4.1\n");
 	if (SendRes == TRNS_FAILED)
 	{
 		printf("Error while sending SERVER_WIN, closing thread.\n");
 		closesocket(*t_socket);
 		return STATUS_CODE_FAILURE;
 	}
+	printf("4.2\n");
 	strcpy(SendStr, "SERVER_MAIN_MENU\n");
 	SendRes = SendMsg(SendStr, *t_socket);
+	printf("4.3\n");
 	if (SendRes == TRNS_FAILED)
 	{
 		printf("Error while sending SERVER_MAIN_MENU, closing thread.\n");
 		closesocket(*t_socket);
 		return STATUS_CODE_FAILURE;
 	}
+	printf("4.4\n");
 	return STATUS_CODE_SUCCESS;
 
 }
@@ -364,6 +374,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 	TransferResult_t SendRes;
 	TransferResult_t RecvRes;
 	static char result[BULLS_COWS_STR_LEN];
+	int my_line_num = -1;
 	while (1)
 	{
 		printf("Start of while true \n");
@@ -389,6 +400,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 		if (is_client_request(AcceptedStr, client_id)) 
 		{
 			two_players_connected = FALSE;
+			printf("1.1\n");
 			if (send_approval(t_socket) == STATUS_CODE_FAILURE) {
 				free(AcceptedStr);
 				return STATUS_CODE_FAILURE;
@@ -409,12 +421,14 @@ static DWORD ServiceThread(SOCKET* t_socket)
 					// We have another player to play
 					send_invite_and_setup_request(t_socket, client_id);
 					There_are_two_players = ONE_RET_VAL;
+					printf("7777\n");
 					i_created_file = TRUE;
 				}
 				else if (wait_res == WAIT_TIMEOUT) {
 					// Always alone, no one wants to play
 					if (remove_file() == STATUS_CODE_FAILURE) return STATUS_CODE_FAILURE;
 					if (send_no_opponet(t_socket) == STATUS_CODE_FAILURE) {
+						printf("1.2\n");
 						free(AcceptedStr);
 						return STATUS_CODE_FAILURE;
 					}
@@ -435,11 +449,13 @@ static DWORD ServiceThread(SOCKET* t_socket)
 				two_players_connected = TRUE;
 				if (SetEvent(versus_event) == FALSE) {
 					printf("cannot set a writing event for file!\n");
+					printf("1.3\n");
 					return STATUS_CODE_FAILURE;
 				}
 				else {
 					if (send_invite_and_setup_request(t_socket, client_id) == STATUS_CODE_FAILURE) {
 						free(AcceptedStr);
+						printf("1.4\n");
 						return STATUS_CODE_FAILURE;
 					}
 
@@ -456,13 +472,13 @@ static DWORD ServiceThread(SOCKET* t_socket)
 		{
 		if (send_player_move_request(t_socket, client_id) == STATUS_CODE_FAILURE) {
 			free(AcceptedStr);
+			printf("1.5\n");
 			return STATUS_CODE_FAILURE;
 		}
 		}
 
 		else if (is_client_move(AcceptedStr, player_move))
 		{
-			int my_line_num;
 		client_move:
 
 			 if (There_are_two_players == ONE_RET_VAL)
@@ -510,7 +526,9 @@ static DWORD ServiceThread(SOCKET* t_socket)
 					//my_line_num = -1;
 					printf("5\n");
 					strcpy_s(op_id, MAX_USERNAME_LEN, user2_name);
+					printf("i_created_file=%d\n", i_created_file);
 					if (i_created_file) {
+						printf("1.9\n");
 						if (remove_file() == STATUS_CODE_FAILURE) return STATUS_CODE_FAILURE;
 						i_created_file = FALSE;
 					}
@@ -539,28 +557,37 @@ static DWORD ServiceThread(SOCKET* t_socket)
 				 }
 				 printf("8\n");
 			 }
-			if (win[0] == ONE_RET_VAL && win[1] == ONE_RET_VAL)		//DRAW
+			else if (win[0] == ONE_RET_VAL && win[1] == ONE_RET_VAL)		//DRAW
 			{
+				printf("3.1\n");
 				if (send_server_draw(t_socket) == STATUS_CODE_FAILURE) {
 					free(AcceptedStr);
+					printf("1.6\n");
 					return STATUS_CODE_FAILURE;
 				}
 			}
 			else if (win[(int)my_line_num] == ONE_RET_VAL) // I won
 			{
+				printf("3.2\n");
 				if (send_server_win(t_socket, op_id, client_id) == STATUS_CODE_FAILURE) {
 					free(AcceptedStr);
+					printf("1.7\n");
 					return STATUS_CODE_FAILURE;
 				}
 			}
 			else // Other Client Won
 			{
+				printf("3.3\n");
 				if (send_server_win(t_socket, op_id, client_id) == STATUS_CODE_FAILURE) {
+					printf("fail is hoon\n");
 					free(AcceptedStr);
 					return STATUS_CODE_FAILURE;
 				}
+				printf("3.4\n");
 			}
+			printf("3.5\n");
 			my_line_num = -1;
+			lines_num = 0;
 			win[0] = UNINITIALIZED;
 			win[1] = UNINITIALIZED;
 
@@ -569,6 +596,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 		else if (client_diconnection(AcceptedStr))
 		{
 			free(AcceptedStr);
+			printf("1.8\n");
 			closesocket(*t_socket);
 			return STATUS_CODE_SUCCESS;
 		}
@@ -859,15 +887,20 @@ accept_again:
 		if (WaitForSingleObject(ExitHandle, 0) == WAIT_OBJECT_0) goto server_cleanup_3; // Polling to check if got exit
 		goto accept_again; // continue checking
 	}
+	printf("2.2\n");
+	printf("2.3\n");
 server_cleanup_3:
+	printf("2.4\n");
 	CleanupWorkerThreads();
 	close_all_handles();
 	free(g_workers_handles);
 server_cleanup_2:
+	printf("2.5\n");
 	if (closesocket(MainSocket) == SOCKET_ERROR)
 		printf("Failed to close MainSocket, error %ld. Ending program\n", WSAGetLastError());
 
 server_cleanup_1:
+	printf("2.6\n");
 	if (WSACleanup() == SOCKET_ERROR)
 		printf("Failed to close Winsocket, error %ld. Ending program.\n", WSAGetLastError());
 }
