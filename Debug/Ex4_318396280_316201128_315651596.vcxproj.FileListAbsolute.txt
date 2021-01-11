@@ -1,4 +1,6 @@
 C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\Debug\client.exe
-C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\Debug\client.pdb
 C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\Debug\client.exe
 C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\Debug\client.pdb
+C:\Users\Edwar\source\repos\Ex4\Full_motivation\Ex4_318396280_316201128_315651596\Debug\client.exe
+C:\Users\Edwar\source\repos\Ex4\Full_motivation\Ex4_318396280_316201128_315651596\Debug\client.pdb
+C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\Debug\client.pdb

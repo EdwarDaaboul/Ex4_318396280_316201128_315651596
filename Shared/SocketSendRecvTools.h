@@ -24,7 +24,7 @@
 typedef struct
 {
 	char message_type[MAX_MESSAGE_TYPE_LEN]; // input
-	char message_args[MAX_USERNAME_LEN+ MAX_MOVE_LEN]; //input
+	char message_args[MAX_MOVE_LEN + MAX_MESSAGE_TYPE_LEN]; //input
 } SEND_MSG_ARGS_params_t;
 
 typedef enum { TRNS_FAILED, TRNS_DISCONNECTED, TRNS_SUCCEEDED } TransferResult_t;

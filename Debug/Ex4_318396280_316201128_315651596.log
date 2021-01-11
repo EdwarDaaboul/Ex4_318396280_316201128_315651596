@@ -1,17 +1,17 @@
 ﻿  Client.c
   main.c
-C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\main.c(16,9): warning C4013: 'printf' undefined; assuming extern returning int
+C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\main.c(16,9): warning C4013: 'printf' undefined; assuming extern returning int
   msgs_file.c
-C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\msgs_file.c(23,8): warning C4013: 'printf' undefined; assuming extern returning int
-C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\msgs_file.c(29,9): warning C4013: 'gets_s' undefined; assuming extern returning int
-C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\msgs_file.c(65,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\msgs_file.c(143,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\msgs_file.c(189,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\msgs_file.c(221,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\msgs_file.c(325,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\msgs_file.c(23,8): warning C4013: 'printf' undefined; assuming extern returning int
+C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\msgs_file.c(29,9): warning C4013: 'gets_s' undefined; assuming extern returning int
+C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\msgs_file.c(65,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\msgs_file.c(143,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\msgs_file.c(189,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\msgs_file.c(221,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\msgs_file.c(325,20): warning C4018: '<': signed/unsigned mismatch
   SocketSendRecvTools.c
-C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\Shared\SocketSendRecvTools.c(89,41): warning C4090: 'function': different 'const' qualifiers
+C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\Shared\SocketSendRecvTools.c(89,41): warning C4090: 'function': different 'const' qualifiers
   ThreadsChecks.c
-C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\ThreadsChecks.c(10,9): warning C4013: 'printf' undefined; assuming extern returning int
+C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\ThreadsChecks.c(10,9): warning C4013: 'printf' undefined; assuming extern returning int
   Generating Code...
-  Ex4_318396280_316201128_315651596.vcxproj -> C:\Users\USER\source\repos\EX_4\Ex4_318396280_316201128_315651596\Debug\client.exe
+  Ex4_318396280_316201128_315651596.vcxproj -> C:\Users\Edwar\source\repos\Ex4\Ex4_318396280_316201128_315651596\Debug\client.exe

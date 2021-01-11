@@ -44,9 +44,12 @@ int There_are_two_players = LAST_PLAYER;				//CHANGEDHERE was: int last_played =
 char* GameSessionFile = "GameSession.txt";
 int lines_num = 0;
 char user1_name[MAX_USERNAME_LEN];
+char user1_setup[MAX_MOVE_LEN];
 char user2_name[MAX_USERNAME_LEN];
+char user2_setup[MAX_MOVE_LEN];
 int win[WIN_INDEX_LEN] = { -1,-1 };		//ADDEDHERE
-
+BOOL opponent_quit = FALSE;
+BOOL first_round = FALSE;
 
 static int FindFirstUnusedThreadSlot();
 static void CleanupWorkerThreads();
@@ -280,6 +283,28 @@ static DWORD send_sever_main_menu(SOCKET* t_socket) {
 	}
 	return STATUS_CODE_SUCCESS;
 }
+static DWORD send_opponent_quit(SOCKET* t_socket) {
+	char SendStr[SEND_STR_SIZE];
+	TransferResult_t SendRes;
+	strcpy(SendStr, "SERVER_OPPONENT_QUIT\n");
+
+	SendRes = SendMsg(SendStr, *t_socket);
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Error while sending SERVER_OPPONENT_QUIT, closing thread.\n");
+		closesocket(*t_socket);
+		return STATUS_CODE_FAILURE;
+	}
+	strcpy(SendStr, "SERVER_MAIN_MENU\n");
+	SendRes = SendMsg(SendStr, *t_socket);
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Error while sending SERVER_MAIN_MENU, closing thread.\n");
+		closesocket(*t_socket);
+		return STATUS_CODE_FAILURE;
+	}
+	return STATUS_CODE_SUCCESS;
+}
 static DWORD send_approval(SOCKET *t_socket) {
 	char SendStr[SEND_STR_SIZE];
 	TransferResult_t SendRes;
@@ -375,6 +400,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 	TransferResult_t RecvRes;
 	static char result[BULLS_COWS_STR_LEN];
 	int my_line_num = -1;
+	int checking_res;
 	while (1)
 	{
 		printf("Start of while true \n");
@@ -386,16 +412,24 @@ static DWORD ServiceThread(SOCKET* t_socket)
 		if (RecvRes == TRNS_FAILED)
 		{
 			printf("Service socket error while reading, closing thread.\n");
+			opponent_quit = TRUE;
 			closesocket(*t_socket);
 			free(AcceptedStr);
 			return STATUS_CODE_FAILURE;
 		}
 		else if (RecvRes == TRNS_DISCONNECTED)
 		{
+			opponent_quit = TRUE;
 			printf("Connection closed while reading, closing thread.\n");
 			closesocket(*t_socket);
 			free(AcceptedStr);
 			return STATUS_CODE_FAILURE;
+		}
+		if (opponent_quit == TRUE)
+		{
+			printf("OPPONENT QUIT >O<\n");
+			if (send_opponent_quit(t_socket) == STATUS_CODE_FAILURE) return STATUS_CODE_FAILURE;
+			opponent_quit = FALSE;
 		}
 		if (is_client_request(AcceptedStr, client_id)) 
 		{
@@ -408,10 +442,11 @@ static DWORD ServiceThread(SOCKET* t_socket)
 		}	
 		else if (is_client_versus(AcceptedStr))
 		{
-		int checking_res;
+		
 		play_versus:
 			checking_res = cheacking_if_file_exits();
-			if (checking_res == ZERO_RET_VAL) {
+			if (checking_res == ZERO_RET_VAL) 
+			{
 				printf("first one creating file \n ");
 				// wait an event. if waited 15 sec and no one signaled event, send no_oponent
 				// when event signaled, request moves from two clients.
@@ -423,6 +458,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 					There_are_two_players = ONE_RET_VAL;
 					printf("7777\n");
 					i_created_file = TRUE;
+					first_round = TRUE;
 				}
 				else if (wait_res == WAIT_TIMEOUT) {
 					// Always alone, no one wants to play
@@ -435,6 +471,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 
 				}
 				else {
+					if (remove_file() == STATUS_CODE_FAILURE) return STATUS_CODE_FAILURE;
 					printf("Waiting for versus event failed! Error is %d\n", GetLastError());
 					free(AcceptedStr);
 					return STATUS_CODE_FAILURE;
@@ -483,12 +520,20 @@ static DWORD ServiceThread(SOCKET* t_socket)
 
 			 if (There_are_two_players == ONE_RET_VAL)
 			{
-				int checking_res_2 = cheacking_if_file_exits();
+				 if (first_round == FALSE)
+				 {
+					  checking_res = cheacking_if_file_exits();
+					  if (checking_res == ZERO_RET_VAL)
+					  {
+						  i_created_file = TRUE;
+					  }
+				 }
 				my_line_num = write_move_to_file(player_move);
 				printf("my line number is: %d\n", my_line_num);
 				if (my_line_num == 1) {
 					printf("1\n");
 					strcpy_s(user2_name, MAX_USERNAME_LEN, client_id);
+					strcpy_s(user2_setup, MAX_MOVE_LEN, player_number);
 					if (SetEvent(finish_writing_event) == 0) {
 						printf("cannot set a writing event for file!\n");
 						free(AcceptedStr);
@@ -498,13 +543,14 @@ static DWORD ServiceThread(SOCKET* t_socket)
 					DWORD Wait_Res = WaitForSingleObject(oponent_name_event, INFINITE);
 					if (handling_wait_code(Wait_Res) == STATUS_CODE_FAILURE) return (STATUS_CODE_FAILURE);
 					reading_from_file_for_calacuation(op_move, player_number, my_line_num);
-					cows_and_bulls(player_number, op_move, result);
+					cows_and_bulls(user1_setup, player_move, result);
 					send_results_server_plays(t_socket, op_move, player_number, user1_name, result, client_id, my_line_num);
 					//my_line_num = -1;
 					strcpy_s(op_id, MAX_USERNAME_LEN, user1_name);
 					if (i_created_file) {
 						if (remove_file() == STATUS_CODE_FAILURE) return STATUS_CODE_FAILURE;
 						i_created_file = FALSE;
+						first_round = FALSE;
 					}
 					printf("3\n");
 				}
@@ -512,6 +558,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 				else if (my_line_num == ZERO_RET_VAL) {
 					printf("4\n");
 					strcpy_s(user1_name, MAX_USERNAME_LEN, client_id);
+					strcpy_s(user1_setup, MAX_MOVE_LEN, player_number);
 					if (SetEvent(oponent_name_event) == 0) {
 						printf("cannot set a writing event for file!\n");
 						free(AcceptedStr);
@@ -521,7 +568,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 					if (handling_wait_code(Wait_Res) == STATUS_CODE_FAILURE) return (STATUS_CODE_FAILURE);
 
 					reading_from_file_for_calacuation(op_move, player_number, my_line_num);
-					cows_and_bulls(player_number, op_move, result);
+					cows_and_bulls(user2_setup, player_move, result);
 					send_results_server_plays(t_socket, op_move, player_number, user2_name, result, client_id, my_line_num);
 					//my_line_num = -1;
 					printf("5\n");
@@ -531,6 +578,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 						printf("1.9\n");
 						if (remove_file() == STATUS_CODE_FAILURE) return STATUS_CODE_FAILURE;
 						i_created_file = FALSE;
+						first_round = FALSE;
 					}
 
 				}
@@ -569,7 +617,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 			else if (win[(int)my_line_num] == ONE_RET_VAL) // I won
 			{
 				printf("3.2\n");
-				if (send_server_win(t_socket, op_id, client_id) == STATUS_CODE_FAILURE) {
+				if (send_server_win(t_socket, client_id, player_move) == STATUS_CODE_FAILURE) {
 					free(AcceptedStr);
 					printf("1.7\n");
 					return STATUS_CODE_FAILURE;
@@ -578,7 +626,7 @@ static DWORD ServiceThread(SOCKET* t_socket)
 			else // Other Client Won
 			{
 				printf("3.3\n");
-				if (send_server_win(t_socket, op_id, client_id) == STATUS_CODE_FAILURE) {
+				if (send_server_win(t_socket, op_id, op_move) == STATUS_CODE_FAILURE) {
 					printf("fail is hoon\n");
 					free(AcceptedStr);
 					return STATUS_CODE_FAILURE;
@@ -700,7 +748,7 @@ static DWORD DeniedThread(SOCKET* t_socket)
 		{
 			SEND_MSG_ARGS_params_t send_msg_args;
 			strcpy_s(send_msg_args.message_type, MAX_MESSAGE_TYPE_LEN, "SERVER_DENIED");
-			strcpy_s(send_msg_args.message_args, MAX_USERNAME_LEN + MAX_MOVE_LEN, "No Available slots in server.");
+			strcpy_s(send_msg_args.message_args, MAX_MOVE_LEN + MAX_MESSAGE_TYPE_LEN, "No Available slots in server.");
 			if (send_msg(send_msg_args, *t_socket) != STATUS_CODE_SUCCESS) {
 				closesocket(*t_socket);
 				return STATUS_CODE_FAILURE;
